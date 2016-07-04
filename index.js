@@ -47,15 +47,22 @@ bot.on('message', (payload, reply) => {
                 }],
             }]
         };
-    	bot.sendMessage(payload.sender.id, messageData, (err, info) => {
-			if (err) {
+
+        reply({
+		    attachment: {
+		        type: 'template',
+		        payload: messageData
+		    }
+	    }, (err) => {
+		  	if (err) {
 				console.log(err);
 				return;
 			}
 
-			console.log(`Sent generic list`)
-		});
-    	return;
+		  	console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+		})
+
+		return;
 	}
 
 	bot.getProfile(payload.sender.id, (err, profile) => {
