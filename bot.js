@@ -1,6 +1,6 @@
 const Bot = require('messenger-bot')
 
-let bot = new Bot({
+var bot = new Bot({
   token: process.env.FB_PAGE_ACCESS_TOKEN,
   verify: process.env.FB_PAGE_VERIFY_TOKEN,
   //app_secret: 'APP_SECRET'
