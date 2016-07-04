@@ -23,7 +23,7 @@ app.get('/', function (req, res) {
 // for Facebook verification
 app.get('/webhook/', function (req, res) {
     if (req.query['hub.verify_token'] === process.env.FB_PAGE_VERIFY_TOKEN) {
-        res.send(req.query['hub.challenge'])
+        return res.send(req.query['hub.challenge'])
     }
     res.send('Error, wrong token')
 })
