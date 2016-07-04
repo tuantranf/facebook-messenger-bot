@@ -1,0 +1,21 @@
+{
+  "name": "fbchatbot",
+  "version": "1.0.0",
+  "description": "Facebook chatbot sample",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "keywords": [
+    "facebook",
+    "chat",
+    "bot"
+  ],
+  "author": "Tuan Tran <tuantranf@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "request": "^2.72.0"
+  }
+}
