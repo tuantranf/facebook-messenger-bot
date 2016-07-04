@@ -54,7 +54,7 @@ bot.on('message', (payload, reply) => {
 				return;
 			}
 
-		  	console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+		  	console.log(`Echoed back to ${payload.sender.id}: ${text}`)
 		})
 
 		return;
