@@ -1,6 +1,8 @@
+'use strict'
+
 const Bot = require('messenger-bot')
 
-var bot = new Bot({
+let bot = new Bot({
   token: process.env.FB_PAGE_ACCESS_TOKEN,
   verify: process.env.FB_PAGE_VERIFY_TOKEN,
   //app_secret: 'APP_SECRET'
@@ -75,4 +77,4 @@ bot.on('message', (payload, reply) => {
 	})
 })
 
-module.exports = bot;
+module.exports = bot
