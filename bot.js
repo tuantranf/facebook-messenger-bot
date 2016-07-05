@@ -12,69 +12,73 @@ bot.on('error', (err) => {
   console.log(err.message)
 })
 
+let menulv1 = {
+  "template_type": "generic",
+  "elements": [{
+    "title": "First card",
+    "subtitle": "Element #1 of an hscroll",
+    "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
+    "buttons": [{
+        "type": "web_url",
+        "url": "https://www.messenger.com",
+        "title": "web url"
+    }, {
+        "type": "postback",
+        "title": "Postback",
+        "payload": "Payload for first element in a generic bubble",
+    }]
+  }, {
+    "title": "Second card",
+    "subtitle": "Element #2 of an hscroll",
+    "image_url": "http://messengerdemo.parseapp.com/img/gearvr.png",
+    "buttons": [{
+        "type": "postback",
+        "title": "Postback",
+        "payload": "Payload for second element in a generic bubble",
+    }]
+  }]
+};
+
 bot.on('message', (payload, reply) => {
   let text = payload.message.text
+  let senderId = payload.sender.id
 
-  	if (text === 'Generic') {
-  		let messageData = {
-            "template_type": "generic",
-            "elements": [{
-                "title": "First card",
-                "subtitle": "Element #1 of an hscroll",
-                "image_url": "http://messengerdemo.parseapp.com/img/rift.png",
-                "buttons": [{
-                    "type": "web_url",
-                    "url": "https://www.messenger.com",
-                    "title": "web url"
-                }, {
-                    "type": "postback",
-                    "title": "Postback",
-                    "payload": "Payload for first element in a generic bubble",
-                }],
-            }, {
-                "title": "Second card",
-                "subtitle": "Element #2 of an hscroll",
-                "image_url": "http://messengerdemo.parseapp.com/img/gearvr.png",
-                "buttons": [{
-                    "type": "postback",
-                    "title": "Postback",
-                    "payload": "Payload for second element in a generic bubble",
-                }],
-            }]
-        };
+  console.log(`Received ${senderId}: ${text}`)
 
-        reply({
-		    attachment: {
-		        type: 'template',
-		        payload: messageData
-		    }
-	    }, (err) => {
-		  	if (err) {
-				console.log(err);
-				return;
-			}
+  if (text === 'Menu') {
+    reply({
+      attachment: {
+        type: 'template',
+        payload: menulv1
+      }
+    }, (err) => {
+      if (err) return console.log(err)
+      console.log(`Echoed back to ${senderId}: ${text}`)
+    })
+  } else {
+    bot.getProfile(senderId, (err, profile) => {
+      if (err) return console.log(err)
 
-		  	console.log(`Echoed back to ${payload.sender.id}: ${text}`)
-		})
+      reply({ text }, (err) => {
+        if (err) return console.log(err)
 
-		return;
-	}
-
-	bot.getProfile(payload.sender.id, (err, profile) => {
-		if (err) {
-			console.log(err);
-			return;
-		}
-
-		reply({ text }, (err) => {
-		  	if (err) {
-				console.log(err);
-				return;
-			}
-
-		  	console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
-		})
-	})
+        console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+      })
+    })
+  }
 })
+
+bot.on('postback', (payload, reply) => {
+  console.log(`Received postback. payload ${payload}`)
+
+  reply({
+    text: 'hey!'
+  }, (err, info) => {
+    if (err) return console.log(err)
+
+    console.log('postback')
+  })
+})
+
 
 module.exports = bot
