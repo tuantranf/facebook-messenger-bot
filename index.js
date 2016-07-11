@@ -26,7 +26,6 @@ app.get('/webhook/', function (req, res) {
 })
 
 app.post('/webhook/', function (req, res) {
-    console.log(req.body)
 	bot._handleMessage(req.body)
   	res.end(JSON.stringify({status: 'ok'}))
 })

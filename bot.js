@@ -1,5 +1,7 @@
 'use strict'
 
+const request = require('request')
+const cheerio = require("cheerio");
 const Bot = require('messenger-bot')
 
 let bot = new Bot({
@@ -7,6 +9,8 @@ let bot = new Bot({
   verify: process.env.FB_PAGE_VERIFY_TOKEN,
   //app_secret: 'APP_SECRET'
 })
+
+let _todayZodiac = {};
 
 bot.on('error', (err) => {
   console.log(err.message)
@@ -182,13 +186,54 @@ let quickReliesMsg = {
   ]
 }
 
+let zodiacs = {
+  "template_type": "generic",
+  "elements": [{
+    "title": "Bach Duong",
+    "subtitle": "Element #1 of an hscroll",
+    "image_url": "http://ngaydep.com/templates/ngaydep/images/cung-bach-duong-thumb.jpg",
+    "buttons": [{
+      "type": "postback",
+      "title": "Button",
+      "payload": "button.zodiac.bach-duong",
+    }]
+  }, {
+    "title": "Kim Nguu",
+    "subtitle": "Element #1 of an hscroll",
+    "image_url": "http://ngaydep.com/templates/ngaydep/images/cung-kim-nguu-thumb.jpg",
+    "buttons": [{
+        "type": "postback",
+        "title": "Button",
+        "payload": "button.zodiac.kim-nguu",
+    }]
+  }, {
+    "title": "Song tu",
+    "subtitle": "Element #1 of an hscroll",
+    "image_url": "http://ngaydep.com/templates/ngaydep/images/cung-song-tu-thumb.jpg",
+    "buttons": [{
+        "type": "postback",
+        "title": "Button",
+        "payload": "button.zodiac.song-tu",
+    }]
+  }, {
+    "title": "Xu nu",
+    "subtitle": "Element #1 of an hscroll",
+    "image_url": "http://ngaydep.com/templates/ngaydep/images/cung-xu-nu-thumb.jpg",
+    "buttons": [{
+        "type": "postback",
+        "title": "Xu nu",
+        "payload": "button.zodiac.xu-nu"
+    }]
+  }]
+}
+
 bot.on('message', (payload, reply) => {
   let text = payload.message.text
   let senderId = payload.sender.id
 
   console.log(`Received ${senderId}: ${text}`)
 
-  if (text === 'Menu') {
+  if (text === 'Menu' || text === 'menu') {
     reply({
       attachment: {
         type: 'template',
@@ -198,7 +243,16 @@ bot.on('message', (payload, reply) => {
       if (err) return console.log("reply error" + err.message)
       console.log(`Echoed back to ${senderId}: ${text}`)
     })
-
+  } else if(text==='Zodiac' || text==='zodiac' || text==='Tuvi' || text==='tuvi') {
+    reply({
+      attachment: {
+        type: 'template',
+        payload: zodiacs
+      }
+    }, (err) => {
+      if (err) return console.log("reply error" + err.message)
+      console.log(`Echoed back to ${senderId}: ${text}`)
+    })
   } else {
     bot.getProfile(senderId, (err, profile) => {
       if (err) return console.log("get profile" + err.message)
@@ -220,36 +274,107 @@ bot.on('postback', (payload, reply) => {
 
   let message = {}
 
-  switch(text) {
-    case 'button':
-      message = button
-      break;
-    case 'video':
-      message = video
-      break;
-    case 'image':
-      message = image
-      break;
-    case 'audio':
-      message = audio
-      break;
-    case 'recipe':
-      message = recipe
-      break;
-    case 'quick':
-      message = quickReliesMsg
-      break;
-    default:
-      message = { text: 'hey!' }
-      break;
+  let isZodiac = /^button.zodiac.*/.test(text);
+  if (isZodiac) {
+    let match = text.match(/^button.zodiac.(.*)/)
+    let zodiac = match[1] || "cu-giai";
+
+    getTodayZodiac(zodiac, function(err, result) {
+      if (err) return console.log("get profile" + err.message)
+
+      // console.log('detail:', result);
+
+      // split result to array
+      result = result.match(/.{1,320}/g);
+
+      //for (var i = 0; i < result.length - 1; i++) {
+      //  message = { text: `${result[i]}` };
+        message = { text: `${result[0]}` };
+        reply(message, (err, info) => {
+          if (err) return console.log("reply error" + err.message)
+
+          console.log(`postback payload: ${zodiac}`)
+        })
+      //}
+    });
+  } else {
+    switch(text) {
+      case 'button':
+        message = button
+        break;
+      case 'video':
+        message = video
+        break;
+      case 'image':
+        message = image
+        break;
+      case 'audio':
+        message = audio
+        break;
+      case 'recipe':
+        message = recipe
+        break;
+      case 'quick':
+        message = quickReliesMsg
+        break;
+      default:
+        message = { text: 'hey!' }
+        break;
+    }
+
+    reply(message, (err, info) => {
+      if (err) return console.log("reply error" + err.message)
+
+      console.log(`postback payload: ${text}`)
+    })
+  }
+})
+
+function getTodayZodiac(zodiac, callback) {
+
+  let today = new Date();
+  let key = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}-${zodiac}`
+
+  if (_todayZodiac[key]) {
+    console.log("found today zodiac data with key:", key)
+    return callback(null, _todayZodiac[key])
   }
 
-  reply(message, (err, info) => {
-    if (err) return console.log("reply error" + err.message)
+  //Lets try to make a HTTP GET request to modulus.io's website.
+  //Lets configure and request
+  request({
+    url: 'http://ngaydep.com/tu-vi-hang-ngay.html', //URL to hit
+    //qs: {from: 'blog example', time: +new Date()}, //Query string data
+    method: 'POST',
+    //Lets post the following key/values as form
+    form: {
+      d: today.getDate(),
+      m: today.getMonth() + 1,
+      y: today.getFullYear(),
+      alias: `${zodiac}`
+    }
+  }, function (error, response, body) {
+    if (error) return callback(error);
 
-    console.log(`postback payload: ${text}`)
-  })
-})
+    //Check for right status code
+    if(response.statusCode !== 200){
+      console.log('Invalid Status Code Returned:', response.statusCode);
+      return callback(new Error(`Invalid Status Code Returned: ${response.statusCode}`))
+    }
+
+    //All is good. Print the body
+    // console.log(body); // Show the HTML for the Modulus homepage.
+
+    let $ = cheerio.load(body);
+    let detail = $('.chitiet_hd p').text()
+    // console.log('detail:', detail);
+
+    // set today zodiac
+    _todayZodiac[key] = detail
+
+    callback(null, detail);
+  });
+}
 
 
 module.exports = bot
