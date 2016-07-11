@@ -198,6 +198,7 @@ bot.on('message', (payload, reply) => {
       if (err) return console.log("reply error" + err.message)
       console.log(`Echoed back to ${senderId}: ${text}`)
     })
+
   } else {
     bot.getProfile(senderId, (err, profile) => {
       if (err) return console.log("get profile" + err.message)
