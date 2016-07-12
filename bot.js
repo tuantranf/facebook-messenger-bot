@@ -234,8 +234,6 @@ bot.on('message', (payload, reply) => {
 
   console.log(`Received ${senderId}: ${text}`)
 
-  let series = [];
-
   if (text === 'Menu' || text === 'menu') {
     reply({
       attachment: {
@@ -289,6 +287,8 @@ bot.on('postback', (payload, reply) => {
 
       // split result to array
       result = result.match(/.{1,320}/g);
+
+      let series = [];
 
       for (var i = 0; i < result.length - 1; i++) {
         series.push(function(done) {
