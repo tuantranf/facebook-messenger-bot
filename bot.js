@@ -288,24 +288,16 @@ bot.on('postback', (payload, reply) => {
       // split result to array
       result = result.match(/.{1,320}/g);
 
-      let series = [];
-
-      for (var i = 0; i < result.length - 1; i++) {
-        series.push(function(done) {
-          reply({ text: `${result[i]}` }, (err, info) => {
-            if (err) return done(err)
-            console.log(result[i]);
-            done(null);
-          })
+      async.eachSeries(result, function iteratee(item, done) {
+        reply({ text: `${item}` }, (err, info) => {
+          if (err) return done(err)
+          done(null)
         })
-      }
-
-      async.series(series, function(err) {
+      }, function(err) {
         if (err) return console.log("send message error:" + err.message)
-
-        console.log(`postback payload: ${text}`)
-        return;
-      });
+        console.log(`zodiac postback payload: ${text}`)
+        return
+      })
     });
   } else {
     switch(text) {
