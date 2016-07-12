@@ -1,7 +1,8 @@
 'use strict'
 
 const request = require('request')
-const cheerio = require("cheerio");
+const cheerio = require("cheerio")
+const async = require("async")
 const Bot = require('messenger-bot')
 
 let bot = new Bot({
@@ -233,6 +234,8 @@ bot.on('message', (payload, reply) => {
 
   console.log(`Received ${senderId}: ${text}`)
 
+  let series = [];
+
   if (text === 'Menu' || text === 'menu') {
     reply({
       attachment: {
@@ -287,15 +290,20 @@ bot.on('postback', (payload, reply) => {
       // split result to array
       result = result.match(/.{1,320}/g);
 
-      //for (var i = 0; i < result.length - 1; i++) {
-      //  message = { text: `${result[i]}` };
-        message = { text: `${result[0]}` };
-        reply(message, (err, info) => {
-          if (err) return console.log("reply error" + err.message)
-
-          console.log(`postback payload: ${zodiac}`)
+      for (var i = 0; i < result.length - 1; i++) {
+        series.push(function(done) {
+          message = { text: `${result[i]}` };
+          reply(message, (err, info) => {
+            if (err) return done(err)
+            done(null);
+          })
         })
-      //}
+      }
+
+      async.series(series, function(err) {
+        if (err) return console.log("send message error:" + err.message)
+        return;
+      });
     });
   } else {
     switch(text) {
