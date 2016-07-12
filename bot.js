@@ -302,6 +302,8 @@ bot.on('postback', (payload, reply) => {
 
       async.series(series, function(err) {
         if (err) return console.log("send message error:" + err.message)
+
+        console.log(`postback payload: ${text}`)
         return;
       });
     });
