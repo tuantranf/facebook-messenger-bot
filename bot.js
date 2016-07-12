@@ -5,6 +5,8 @@ const cheerio = require("cheerio")
 const async = require("async")
 const Bot = require('messenger-bot')
 
+const {Wit, log} = require('node-wit');
+
 let bot = new Bot({
   token: process.env.FB_PAGE_ACCESS_TOKEN,
   verify: process.env.FB_PAGE_VERIFY_TOKEN,
@@ -12,6 +14,59 @@ let bot = new Bot({
 })
 
 let _todayZodiac = {};
+
+// ----------------------------------------------------------------------------
+// Wit.ai bot specific code
+
+// This will contain all user sessions.
+// Each session has an entry:
+// sessionId -> {fbid: facebookUserId, context: sessionState}
+let sessions = {};
+
+// Our bot actions
+const actions = {
+  send(request, response) {
+    const {sessionId, context, entities} = request;
+    const {text, quickreplies} = response;
+
+    return new Promise(function(resolve, reject) {
+      console.log('sending...', JSON.stringify(response));
+      return resolve();
+    });
+  },
+  getForecast({context, entities}) {
+    return new Promise(function(resolve, reject) {
+      // Here should go the api call, e.g.:
+      // context.forecast = apiCall(context.loc)
+      context.forecast = 'sunny';
+      return resolve(context);
+    });
+  },
+};
+
+// Setting up our bot
+const wit = new Wit({
+  accessToken: process.env.WIT_TOKEN,
+  actions,
+  logger: new log.Logger(log.INFO)
+});
+
+const findOrCreateSession = (fbid) => {
+  let sessionId;
+  // Let's see if we already have a session for the user fbid
+  Object.keys(sessions).forEach(k => {
+    if (sessions[k].fbid === fbid) {
+      // Yep, got it!
+      sessionId = k;
+    }
+  });
+  if (!sessionId) {
+    // No session found for user fbid, let's create a new one
+    sessionId = new Date().toISOString();
+    sessions[sessionId] = {fbid: fbid, context: {}};
+  }
+  return sessionId;
+};
 
 bot.on('error', (err) => {
   console.log(err.message)
@@ -255,15 +310,52 @@ bot.on('message', (payload, reply) => {
       console.log(`Echoed back to ${senderId}: ${text}`)
     })
   } else {
-    bot.getProfile(senderId, (err, profile) => {
-      if (err) return console.log("get profile" + err.message)
+    // We retrieve the user's current session, or create one if it doesn't exist
+    // This is needed for our bot to figure out the conversation history
+    const sessionId = findOrCreateSession(senderId);
 
-      reply({ text }, (err) => {
+    // Let's forward the message to the Wit.ai Bot Engine
+    // This will run all actions until our bot has nothing left to do
+    wit.runActions(
+      sessionId, // the user's current session
+      text, // the user's message
+      sessions[sessionId].context // the user's current session state
+    ).then((context) => {
+      // Our bot did everything it has to do.
+      // Now it's waiting for further messages to proceed.
+      console.log('Waiting for next user messages');
+
+      // // Based on the session state, you might want to reset the session.
+      // // This depends heavily on the business logic of your bot.
+      // // Example:
+      // if (context['done']) {
+      //   delete sessions[sessionId];
+      // }
+
+      console.log(JSON.stringify(context))
+      // Updating the user's current session state
+      sessions[sessionId].context = context;
+
+      reply({ text: context.forecast }, (err) => {
         if (err) return console.log("reply error" + err.message)
 
-        console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+        console.log(`Echoed back to : ${context}`)
       })
+
     })
+    .catch((err) => {
+      console.error('Oops! Got an error from Wit: ', err.stack || err);
+    })
+
+    // bot.getProfile(senderId, (err, profile) => {
+    //   if (err) return console.log("get profile" + err.message)
+
+    //   reply({ text }, (err) => {
+    //     if (err) return console.log("reply error" + err.message)
+
+    //     console.log(`Echoed back to ${profile.first_name} ${profile.last_name}: ${text}`)
+    //   })
+    // })
   }
 })
 
@@ -377,6 +469,5 @@ function getTodayZodiac(zodiac, callback) {
     callback(null, detail);
   });
 }
-
 
 module.exports = bot
