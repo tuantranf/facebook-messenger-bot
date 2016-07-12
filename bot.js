@@ -294,6 +294,7 @@ bot.on('postback', (payload, reply) => {
         series.push(function(done) {
           reply({ text: `${result[i]}` }, (err, info) => {
             if (err) return done(err)
+            console.log(result[i]);
             done(null);
           })
         })
