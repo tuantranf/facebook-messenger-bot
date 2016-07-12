@@ -5,7 +5,8 @@ const cheerio = require("cheerio")
 const async = require("async")
 const Bot = require('messenger-bot')
 
-const {Wit, log} = require('node-wit');
+let Wit = require('node-wit').Wit;
+let log = require('node-wit').log;
 
 let bot = new Bot({
   token: process.env.FB_PAGE_ACCESS_TOKEN,
