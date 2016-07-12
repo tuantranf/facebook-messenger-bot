@@ -292,8 +292,7 @@ bot.on('postback', (payload, reply) => {
 
       for (var i = 0; i < result.length - 1; i++) {
         series.push(function(done) {
-          message = { text: `${result[i]}` };
-          reply(message, (err, info) => {
+          reply({ text: `${result[i]}` }, (err, info) => {
             if (err) return done(err)
             done(null);
           })
